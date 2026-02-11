@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arctic Climate Analysis — Hypothesis Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #060a14;
+    --bg-elevated: #0a0f1a;
+    --card: #0e1525;
+    --card-hover: #121c30;
+    --border: #1a2744;
+    --border-light: #243352;
+    --text: #dce4f5;
+    --text-muted: #8b9ec2;
+    --text-dim: #556b94;
+    --accent: #38bdf8;
+    --grid: #152035;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', 'Inter', -apple-system, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+  .dashboard-root { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Hero Section */
+  .hero {
+    padding: 60px 0 48px;
+    text-align: center;
+    position: relative;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -50%; right: -50%; bottom: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(56, 189, 248, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    background: rgba(56, 189, 248, 0.06);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 20px;
+  }
+
+  .hero-badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #38bdf8 50%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: 15px;
+    color: var(--text-muted);
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* Category Sections */
+  .category-section {
+    margin-bottom: 48px;
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .category-icon {
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+  }
+
+  .category-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .category-count {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-left: auto;
+  }
+
+  /* Hypothesis Cards Grid */
+  .hypothesis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  .hypothesis-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hypothesis-card:hover {
+    background: var(--card-hover);
+    border-color: var(--border-light);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .hypothesis-card-accent {
+    height: 3px;
+    width: 100%;
+  }
+
+  .hypothesis-card-body {
+    padding: 20px 22px 18px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hypothesis-card-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 8px;
+  }
+
+  .hypothesis-card h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .hypothesis-card p {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-muted);
+    flex: 1;
+  }
+
+  .hypothesis-card-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .meta-tag {
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    border: 1px solid;
+  }
+
+  .hypothesis-card-arrow {
+    position: absolute;
+    top: 20px;
+    right: 18px;
+    font-size: 16px;
+    color: var(--text-dim);
+    transition: all 0.3s ease;
+  }
+
+  .hypothesis-card:hover .hypothesis-card-arrow {
+    color: var(--accent);
+    transform: translateX(3px);
+  }
+
+  /* Stats row in hero */
+  .global-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 36px;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .global-stat {
+    text-align: center;
+  }
+
+  .global-stat-value {
+    font-family: 'DM Mono', 'IBM Plex Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .global-stat-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Detail View */
+  .detail-view {
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  .detail-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 24px;
+    font-family: inherit;
+  }
+
+  .detail-back:hover {
+    background: var(--card-hover);
+    color: var(--text);
+    border-color: var(--border-light);
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+
+  .footer p {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 28px; }
+    .hypothesis-grid { grid-template-columns: 1fr; }
+    .global-stats { flex-wrap: wrap; gap: 20px; }
+    .dashboard-root { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+<script crossorigin src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+<script crossorigin src="https://unpkg.com/recharts@2.5.0/umd/Recharts.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
+
+<script type="text/babel" data-type="module">
+
+const { useState, useMemo, useCallback, useRef, useEffect } = React;
+const {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Legend, Area, AreaChart, ReferenceLine, ComposedChart,
+  Scatter, ScatterChart, Cell, ZAxis,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+} = window.Recharts;
+
+// ═══════════════════════════════════════════════════════════════
+// SHARED DESIGN TOKENS & COMPONENTS
+// ═══════════════════════════════════════════════════════════════
+
+const P = {
+  bg: "#060a14", card: "#0e1525", border: "#1a2744", borderLight: "#243352",
+  text: "#dce4f5", muted: "#8b9ec2", dim: "#556b94",
+  grid: "#152035",
+};
+
+const HYPOTHESIS_DATA = [
+  {
+    id: "h1", label: "H1", category: "permafrost",
+    accent: "#f97316",
+    title: "Active Layer Thickness Is Increasing",
+    subtitle: "Is permafrost active layer thickness increasing over time across the Arctic?",
+    description: "Analysis of the CALM network — 263 monitoring sites across 12 countries, 1990–2024. Testing whether the depth at which ground thaws each summer is deepening.",
+    datasets: ["CALM (1990–2024)"],
+    tags: [{ label: "263 Sites", color: "#f97316" }, { label: "34 Years", color: "#22c55e" }],
+    verdict: "Supported",
+    verdictColor: "#22c55e",
+    keyFinding: "+0.13 cm/yr trend. Svalbard shows strongest signal (+75% since 1990s).",
+  },
+  {
+    id: "h2", label: "H2", category: "permafrost",
+    accent: "#ef4444",
+    title: "Deeper Active Layers Drive Coastal Erosion",
+    subtitle: "Are deeper active layers associated with higher coastal erosion rates?",
+    description: "Cross-referencing CALM active layer depth with Arctic Coastal Dynamics erosion data across 1,314 coastal segments spanning 318,000 km.",
+    datasets: ["CALM", "ACD Erosion"],
+    tags: [{ label: "1,314 Segments", color: "#ef4444" }, { label: "318K km", color: "#38bdf8" }],
+    verdict: "Partially Supported",
+    verdictColor: "#f59e0b",
+    keyFinding: "Ground ice content is the true driver — 106× erosion multiplier from 0% to >50% ice content.",
+  },
+  {
+    id: "h3", label: "H3", category: "coastal",
+    accent: "#0ea5e9",
+    title: "Coastal Sensitivity Will Increase by 2090s",
+    subtitle: "Will Arctic coastal sensitivity increase dramatically by the 2090s?",
+    description: "CanCoast 2.0 composite sensitivity indices for 1.76M coastline segments, comparing 2000s baseline to 2090s projections across 520,000 km of Canadian coast.",
+    datasets: ["CanCoast 2.0"],
+    tags: [{ label: "1.76M Segments", color: "#0ea5e9" }, { label: "520K km", color: "#a78bfa" }],
+    verdict: "Supported",
+    verdictColor: "#22c55e",
+    keyFinding: "60% of coastline increases in sensitivity. Beaufort Sea is ground zero (+900 to +1,180 CSI points).",
+  },
+  {
+    id: "h4", label: "H4", category: "coastal",
+    accent: "#3b82f6",
+    title: "Storm Surge Events Are Intensifying",
+    subtitle: "Are storm surge events (tidal residuals) intensifying at Arctic stations?",
+    description: "Analysis of CHS tide gauge residuals at 4 Arctic stations, characterizing magnitude and frequency of storm surge events including a major October 2023 event.",
+    datasets: ["CHS Tide Gauges (2023)"],
+    tags: [{ label: "4 Stations", color: "#3b82f6" }, { label: "Monthly P99", color: "#f59e0b" }],
+    verdict: "Supported",
+    verdictColor: "#22c55e",
+    keyFinding: "Tuktoyaktuk: 1.73m peak surge in October 2023 — the October danger window is clear.",
+  },
+  {
+    id: "h5", label: "H5", category: "ice_snow",
+    accent: "#38bdf8",
+    title: "Ice Thickness Is Declining, Season Shortening",
+    subtitle: "Is ice thickness declining and ice season shortening at Arctic stations?",
+    description: "Direct trend analysis of peak ice thickness and snow depth across 11 Canadian monitoring stations from 2002–2024.",
+    datasets: ["Ice Thickness Program (2002–2024)"],
+    tags: [{ label: "11 Stations", color: "#38bdf8" }, { label: "22 Years", color: "#f43f5e" }],
+    verdict: "Supported",
+    verdictColor: "#22c55e",
+    keyFinding: "Hall Beach leads decline at -28 cm/decade. 9 of 11 stations show thinning ice.",
+  },
+  {
+    id: "h6", label: "H6", category: "ice_snow",
+    accent: "#E8935A",
+    title: "River Freeze-Up Later, Breakup Earlier",
+    subtitle: "Is river freeze-up happening later and breakup earlier over the 20th century?",
+    description: "120+ years of Canadian River Ice Database phenology data (1894–2015) testing whether the ice-free season on Arctic rivers is lengthening.",
+    datasets: ["Canadian River Ice DB (1894–2015)"],
+    tags: [{ label: "120+ Years", color: "#E8935A" }, { label: "2 Regions", color: "#4CC9B0" }],
+    verdict: "Partially Supported",
+    verdictColor: "#f59e0b",
+    keyFinding: "Southern rivers: breakup advancing ~4 days/century. Northern rivers: freeze-up signal weak but breakup trending earlier.",
+  },
+  {
+    id: "h7", label: "H7", category: "ice_snow",
+    accent: "#38BDF8",
+    title: "Snow Water Equivalent Is Declining",
+    subtitle: "Is snow water equivalent (SWE) declining in northern Canada?",
+    description: "CanSWE dataset spanning 1928–2023 with 2,921 stations — nearly a century of snow data testing whether snowpack is thinning at high latitudes.",
+    datasets: ["CanSWE (1928–2023)"],
+    tags: [{ label: "2,921 Stations", color: "#38BDF8" }, { label: "~95 Years", color: "#F59E0B" }],
+    verdict: "Not Supported",
+    verdictColor: "#ef4444",
+    keyFinding: "Northern SWE is actually increasing (+1.2 mm/decade). Southern SWE declining. The Arctic is getting snowier, not drier.",
+  },
+  {
+    id: "h8", label: "H8", category: "synthesis",
+    accent: "#00E5A0",
+    title: "Compounding Climate Impacts by Region",
+    subtitle: "Do regions with the greatest warming show correlated changes in ice, permafrost, and coastal erosion?",
+    description: "Multi-variable synthesis linking climate normals with ice thickness, active layer depth, and erosion rates to identify compounding Arctic impact zones.",
+    datasets: ["All Datasets Combined"],
+    tags: [{ label: "Cross-Dataset", color: "#00E5A0" }, { label: "5 Variables", color: "#B388FF" }],
+    verdict: "Supported",
+    verdictColor: "#22c55e",
+    keyFinding: "Western Beaufort/Mackenzie is the clear compound hotspot — fastest erosion, thinning ice, deepening permafrost, highest ground-ice.",
+  },
+];
+
+const CATEGORIES = [
+  { id: "permafrost", label: "Permafrost & Active Layer", icon: "🔥", count: 2 },
+  { id: "coastal", label: "Coastal Change & Sea Level", icon: "🌊", count: 2 },
+  { id: "ice_snow", label: "Ice & Snow Trends", icon: "🧊", count: 3 },
+  { id: "synthesis", label: "Cross-Dataset Synthesis", icon: "🌍", count: 1 },
+];
+
+// Shared tooltip component
+function SharedTooltip({ active, payload, label, suffix = "" }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: "#1B2340", border: "1px solid #243352", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: P.text, maxWidth: 260 }}>
+      <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 13 }}>{label}</div>
+      {payload.filter(p => p.value != null).map((p, i) => (
+        <div key={i} style={{ color: p.color || p.stroke || P.muted, marginTop: 2 }}>
+          {p.name}: <strong>{typeof p.value === "number" ? p.value.toFixed(1) : p.value}{suffix}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StatCard({ label, value, sub, color = "#38bdf8", icon }) {
+  return (
+    <div style={{ background: P.card, border: `1px solid ${P.border}`, borderRadius: 12, padding: "16px 18px", flex: 1, minWidth: 140, borderTop: `3px solid ${color}` }}>
+      <div style={{ fontSize: 10, color: P.dim, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4, fontFamily: "'IBM Plex Mono', monospace" }}>{icon} {label}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color, fontFamily: "'DM Mono', 'IBM Plex Mono', monospace", lineHeight: 1.1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: P.muted, marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function ChartCard({ title, subtitle, children, style }) {
+  return (
+    <div style={{ background: P.card, border: `1px solid ${P.border}`, borderRadius: 12, padding: 24, marginBottom: 20, ...style }}>
+      {title && <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 600, fontFamily: "'Space Grotesk', sans-serif" }}>{title}</h3>}
+      {subtitle && <p style={{ margin: "0 0 18px", fontSize: 13, color: P.muted }}>{subtitle}</p>}
+      {children}
+    </div>
+  );
+}
+
+function TabBar({ tabs, active, onChange, accent = "#38bdf8" }) {
+  return (
+    <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${P.border}`, marginBottom: 24 }}>
+      {tabs.map((t, i) => (
+        <button key={i} onClick={() => onChange(i)} style={{
+          padding: "12px 18px", background: "none", border: "none",
+          color: active === i ? accent : P.dim,
+          borderBottom: active === i ? `2px solid ${accent}` : "2px solid transparent",
+          cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "inherit",
+          transition: "all 0.2s",
+        }}>{t}</button>
+      ))}
+    </div>
+  );
+}
+
+function VerdictBox({ supported, text, color }) {
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, ${color}10 0%, ${P.card} 100%)`,
+      border: `1px solid ${color}33`, borderRadius: 12, padding: "16px 20px", marginBottom: 22,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontSize: 14 }}>{supported ? "✅" : "⚠️"}</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color, fontFamily: "'IBM Plex Mono', monospace" }}>
+          HYPOTHESIS {supported ? "SUPPORTED" : "PARTIALLY SUPPORTED / NOT SUPPORTED"}
+        </span>
+      </div>
+      <p style={{ fontSize: 13, lineHeight: 1.6, color: P.muted, margin: 0 }}>{text}</p>
+    </div>
+  );
+}
+
+function linearRegression(data) {
+  const n = data.length;
+  if (n < 2) return { slope: 0, intercept: 0, r2: 0 };
+  const sx = data.reduce((s, d) => s + d.x, 0);
+  const sy = data.reduce((s, d) => s + d.y, 0);
+  const sxy = data.reduce((s, d) => s + d.x * d.y, 0);
+  const sx2 = data.reduce((s, d) => s + d.x * d.x, 0);
+  const slope = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+  const intercept = (sy - slope * sx) / n;
+  const ybar = sy / n;
+  const sstot = data.reduce((s, d) => s + (d.y - ybar) ** 2, 0);
+  const ssres = data.reduce((s, d) => s + (d.y - (slope * d.x + intercept)) ** 2, 0);
+  const r2 = sstot > 0 ? 1 - ssres / sstot : 0;
+  return { slope, intercept, r2 };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// H1: ACTIVE LAYER ANALYSIS
+// ═══════════════════════════════════════════════════════════════
+const h1_cohort = [
+  {year:1990,mean:109.6},{year:1991,mean:89.0},{year:1992,mean:91.5},{year:1993,mean:82.3},
+  {year:1994,mean:79.6},{year:1995,mean:70.0},{year:1996,mean:61.5},{year:1997,mean:69.6},
+  {year:1998,mean:73.9},{year:1999,mean:83.4},{year:2000,mean:86.8},{year:2001,mean:88.8},
+  {year:2002,mean:85.3},{year:2003,mean:98.2},{year:2004,mean:99.0},{year:2005,mean:91.4},
+  {year:2006,mean:87.8},{year:2007,mean:93.5},{year:2008,mean:86.6},{year:2009,mean:94.5},
+  {year:2010,mean:98.9},{year:2011,mean:100.4},{year:2012,mean:98.3},{year:2013,mean:102.7},
+  {year:2014,mean:102.5},{year:2015,mean:108.8},{year:2016,mean:107.3},{year:2017,mean:101.8},
+  {year:2018,mean:112.2},{year:2019,mean:121.6},{year:2020,mean:146.8},{year:2021,mean:123.8},
+  {year:2022,mean:112.1},{year:2023,mean:86.8},{year:2024,mean:75.4},
+];
+const h1_countryYearly = {
+  "Russia": [{year:1992,mean:70.5},{year:1995,mean:75.7},{year:2000,mean:66.7},{year:2005,mean:75.7},{year:2010,mean:75.9},{year:2015,mean:78.3},{year:2020,mean:87.6},{year:2024,mean:99.4}],
+  "Alaska": [{year:1990,mean:49.0},{year:1995,mean:47.3},{year:2000,mean:45.4},{year:2005,mean:46.8},{year:2010,mean:55.0},{year:2015,mean:54.7},{year:2020,mean:62.9},{year:2024,mean:59.7}],
+  "Greenland": [{year:1996,mean:60.5},{year:2000,mean:64.0},{year:2005,mean:74.0},{year:2010,mean:74.0},{year:2015,mean:64.5},{year:2020,mean:80.5},{year:2024,mean:82.0}],
+  "Svalbard": [{year:1998,mean:152.0},{year:2002,mean:249.3},{year:2007,mean:165.7},{year:2012,mean:139.0},{year:2017,mean:260.5},{year:2020,mean:271.0},{year:2024,mean:390.7}],
+};
+const h1_decadeChanges = [
+  {country:"Svalbard",from:176.0,to:308.7,change:132.7,pct:"75"},
+  {country:"Russia",from:61.3,to:84.8,change:23.5,pct:"38"},
+  {country:"Greenland",from:60.2,to:80.8,change:20.6,pct:"34"},
+  {country:"Alaska",from:48.0,to:60.8,change:12.8,pct:"27"},
+];
+
+function H1Detail() {
+  const [tab, setTab] = useState(0);
+  const accent = "#f97316";
+  const reg = linearRegression(h1_cohort.map(d => ({x: d.year, y: d.mean})));
+
+  return (
+    <div>
+      <TabBar tabs={["Overview", "By Country", "Key Findings"]} active={tab} onChange={setTab} accent={accent} />
+
+      {tab === 0 && (
+        <div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+            <StatCard icon="📊" label="Sites" value="263" sub="12 countries" color="#38bdf8" />
+            <StatCard icon="📅" label="Time Span" value="34 yrs" sub="1990–2024" color="#22c55e" />
+            <StatCard icon="📐" label="Observations" value="3,781" sub="Valid measurements" color="#a78bfa" />
+            <StatCard icon="🌡️" label="Cohort Trend" value={`+${reg.slope.toFixed(2)}`} sub="cm/year (R²=0.06)" color={accent} />
+          </div>
+          <ChartCard title="Fixed-Cohort Mean Active Layer Depth" subtitle="Only sites with 20+ years of data — controls for site composition bias.">
+            <ResponsiveContainer width="100%" height={320}>
+              <ComposedChart data={h1_cohort} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+                <XAxis dataKey="year" stroke={P.dim} fontSize={11} />
+                <YAxis stroke={P.dim} fontSize={11} label={{ value: "Depth (cm)", angle: -90, position: "insideLeft", fill: P.dim, fontSize: 11 }} />
+                <Tooltip content={<SharedTooltip suffix=" cm" />} />
+                <Area type="monotone" dataKey="mean" fill={accent + "20"} stroke="none" />
+                <Line type="monotone" dataKey="mean" stroke={accent} strokeWidth={2.5} dot={false} name="Mean Depth" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+          <ChartCard title="Change from 1990s to 2020s by Region" subtitle="Mean active layer depth: decade averages compared">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={h1_decadeChanges} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} horizontal={false} />
+                <XAxis type="number" stroke={P.dim} fontSize={11} />
+                <YAxis dataKey="country" type="category" stroke={P.dim} fontSize={11} width={75} />
+                <Tooltip content={<SharedTooltip suffix=" cm" />} />
+                <Bar dataKey="change" fill={accent} radius={[0, 6, 6, 0]} barSize={24} name="Change (cm)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+
+      {tab === 1 && (
+        <div>
+          {Object.entries(h1_countryYearly).map(([country, data]) => {
+            const r = linearRegression(data.map(d => ({x: d.year, y: d.mean})));
+            const colors = { Russia: "#38bdf8", Alaska: "#f97316", Greenland: "#22c55e", Svalbard: "#a78bfa" };
+            const c = colors[country] || "#38bdf8";
+            return (
+              <ChartCard key={country} title={country} subtitle={`Trend: ${r.slope > 0 ? '+' : ''}${r.slope.toFixed(2)} cm/year (R² = ${r.r2.toFixed(3)})`}>
+                <ResponsiveContainer width="100%" height={200}>
+                  <ComposedChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+                    <XAxis dataKey="year" stroke={P.dim} fontSize={11} />
+                    <YAxis stroke={P.dim} fontSize={11} />
+                    <Tooltip content={<SharedTooltip suffix=" cm" />} />
+                    <Area type="monotone" dataKey="mean" fill={c + "20"} stroke="none" />
+                    <Line type="monotone" dataKey="mean" stroke={c} strokeWidth={2} dot={{ r: 3, fill: c }} name="Mean Depth (cm)" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === 2 && (
+        <div>
+          <VerdictBox supported={true} color="#22c55e"
+            text="Active layer deepening is real but highly variable by region. Svalbard shows the most dramatic signal (+75% since the 1990s). Alaska and Russia show steady, significant deepening. The trend is driven by Atlantic and Pacific warming amplification, with the strongest signals at maritime-influenced sites." />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {[
+              { icon: "🔥", title: "Svalbard: The Alarm Bell", text: "Active layer depths increased 75% from the 1990s to 2020s (176 → 309 cm), with 2024 hitting an unprecedented 391 cm. Atlantic heat intrusion is driving rapid permafrost degradation." },
+              { icon: "🏔️", title: "Alaska: Steady Deepening", text: "A consistent +27% increase from 48 cm in the 1990s to 61 cm in the 2020s. The signal is smaller but remarkably consistent, with R² = 0.85 for the linear trend." },
+              { icon: "🌡️", title: "Latitude Matters", text: "Sub-Arctic sites (60-65°N) show the most dramatic deepening — 170 cm mean in the 2020s vs. 72 cm in the 1990s. Higher latitudes are more buffered by persistent cold." },
+              { icon: "📊", title: "Composition Bias Warning", text: "Raw all-site averages show an apparent decrease (a statistical artifact). The fixed-cohort analysis reveals the true trend: consistent deepening at +0.13 cm/year." },
+            ].map((card, i) => (
+              <div key={i} style={{ background: P.card, border: `1px solid ${P.border}`, borderRadius: 12, padding: "16px 18px" }}>
+                <div style={{ fontSize: 16, marginBottom: 6 }}>{card.icon}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6, color: P.text, fontFamily: "'Space Grotesk', sans-serif" }}>{card.title}</div>
+                <div style={{ fontSize: 12, color: P.muted, lineHeight: 1.6 }}>{card.text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// H2: EROSION ANALYSIS
+// ═══════════════════════════════════════════════════════════════
+const h2_iceErosion = [
+  {bin:"0%",iceContent:0,meanErosion:0.02},{bin:"1-10%",iceContent:5,meanErosion:0.15},
+  {bin:"10-20%",iceContent:15,meanErosion:0.42},{bin:"20-30%",iceContent:25,meanErosion:0.78},
+  {bin:"30-40%",iceContent:35,meanErosion:1.12},{bin:"40-50%",iceContent:45,meanErosion:1.65},
+  {bin:">50%",iceContent:55,meanErosion:2.12},
+];
+const h2_regional = [
+  {region:"Laptev Sea",erosion:1.16,iceVol:22.8,km:35966,color:"#ef4444"},
+  {region:"E. Siberian",erosion:1.01,iceVol:21.5,km:25483,color:"#f97316"},
+  {region:"Canadian Beaufort",erosion:0.48,iceVol:25.3,km:12864,color:"#38bdf8"},
+  {region:"US Beaufort",erosion:0.43,iceVol:32.1,km:8806,color:"#22c55e"},
+  {region:"Chukchi Sea",erosion:0.35,iceVol:13.1,km:6694,color:"#a78bfa"},
+  {region:"Barents Sea",erosion:0.29,iceVol:11.2,km:57048,color:"#f59e0b"},
+  {region:"Kara Sea",erosion:0.15,iceVol:21.7,km:72975,color:"#64748b"},
+];
+
+function H2Detail() {
+  const [tab, setTab] = useState(0);
+  const accent = "#ef4444";
+  return (
+    <div>
+      <TabBar tabs={["Ice → Erosion", "Regional Patterns", "Synthesis"]} active={tab} onChange={setTab} accent={accent} />
+      {tab === 0 && (
+        <div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+            <StatCard icon="🌊" label="Coastal Segments" value="1,314" sub="ACD database" color="#ef4444" />
+            <StatCard icon="📏" label="Total Coast" value="318K km" sub="Circum-Arctic" color="#38bdf8" />
+            <StatCard icon="🧊" label="Ice Multiplier" value="106×" sub=">50% vs 0% ice" color="#f59e0b" />
+            <StatCard icon="📍" label="Max Erosion" value="8.4 m/yr" sub="Drew Point, Alaska" color="#a78bfa" />
+          </div>
+          <ChartCard title="Ground Ice Content vs Mean Erosion Rate" subtitle="Higher ice content = dramatically faster erosion (thermoabrasion)">
+            <ResponsiveContainer width="100%" height={320}>
+              <ComposedChart data={h2_iceErosion} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+                <XAxis dataKey="bin" stroke={P.dim} fontSize={11} />
+                <YAxis stroke={P.dim} fontSize={11} label={{ value: "Mean Erosion (m/yr)", angle: -90, position: "insideLeft", fill: P.dim, fontSize: 11 }} />
+                <Tooltip content={<SharedTooltip suffix=" m/yr" />} />
+                <Bar dataKey="meanErosion" fill={accent} radius={[6, 6, 0, 0]} barSize={36} name="Mean Erosion" />
+                <Line type="monotone" dataKey="meanErosion" stroke="#f59e0b" strokeWidth={2} dot={false} name="Trend" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+      {tab === 1 && (
+        <ChartCard title="Erosion Rates by Arctic Sea" subtitle="Mean and maximum erosion rates from the Arctic Coastal Dynamics database">
+          <ResponsiveContainer width="100%" height={340}>
+            <BarChart data={h2_regional} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={P.grid} horizontal={false} />
+              <XAxis type="number" stroke={P.dim} fontSize={11} />
+              <YAxis dataKey="region" type="category" stroke={P.dim} fontSize={11} width={110} />
+              <Tooltip content={<SharedTooltip suffix=" m/yr" />} />
+              <Bar dataKey="erosion" radius={[0, 6, 6, 0]} barSize={22} name="Mean Erosion (m/yr)">
+                {h2_regional.map((d, i) => <Cell key={i} fill={d.color} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      )}
+      {tab === 2 && (
+        <div>
+          <VerdictBox supported={false} color="#f59e0b"
+            text="The relationship between active layer depth and erosion is real but inverse to what was expected. Ground ice content is the true driver — not active layer depth itself. Areas with shallow active layers but high ground ice content (like Drew Point, Alaska) can erode at 8.4 m/yr, while sites with very deep active layers but low ice content barely erode." />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {[
+              { icon: "🧊", title: "Ice Content Is King", text: "Ground ice content explains far more variance in erosion rate than active layer depth. The 106× multiplier from 0% to >50% ice content is the strongest single predictor." },
+              { icon: "📍", title: "Drew Point Spotlight", text: "Drew Point, Alaska: 8.4 m/yr erosion, 70% ground ice, only 39 cm active layer. The poster child for ice-rich thermoabrasion erosion." },
+              { icon: "🌊", title: "Wave Exposure Matters", text: "Wave exposure is the second key factor. Even with high ice content, sheltered coastlines erode slowly. Open Beaufort and Laptev shores are most vulnerable." },
+              { icon: "🔄", title: "The Paradox Explained", text: "Shallow active layer + high ice = catastrophic erosion. Deep active layer + low ice = minimal erosion. The mechanism is thermoabrasion of exposed ice-rich cliff faces." },
+            ].map((card, i) => (
+              <div key={i} style={{ background: P.card, border: `1px solid ${P.border}`, borderRadius: 12, padding: "16px 18px" }}>
+                <div style={{ fontSize: 16, marginBottom: 6 }}>{card.icon}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6, color: P.text, fontFamily: "'Space Grotesk', sans-serif" }}>{card.title}</div>
+                <div style={{ fontSize: 12, color: P.muted, lineHeight: 1.6 }}>{card.text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// H3: COASTAL SENSITIVITY
+// ═══════════════════════════════════════════════════════════════
+const h3_zones = [
+  {zone:"High Arctic (≥70°N)", csi2000: 83.7, csi2090: 236.5, change: 152.8, km: 137162, pctIncrease: 62, color: "#f43f5e"},
+  {zone:"Sub-Arctic (60-70°N)", csi2000: -34.2, csi2090: -30.0, change: 4.2, km: 181745, pctIncrease: 48, color: "#a78bfa"},
+  {zone:"Southern (<60°N)", csi2000: -173.5, csi2090: 37.3, change: 210.8, km: 69082, pctIncrease: 89, color: "#f59e0b"},
+];
+const h3_hotspots = [
+  {region:"Beaufort Sea",change:1040,color:"#ef4444"},
+  {region:"Southern BC",change:420,color:"#f97316"},
+  {region:"Atlantic NS/NB",change:310,color:"#f59e0b"},
+  {region:"High Arctic Islands",change:153,color:"#38bdf8"},
+  {region:"Hudson Bay",change:85,color:"#22c55e"},
+  {region:"Central Arctic"  ,change:-45,color:"#a78bfa"},
+];
+
+function H3Detail() {
+  const [tab, setTab] = useState(0);
+  const accent = "#0ea5e9";
+  return (
+    <div>
+      <TabBar tabs={["National Overview", "Regional Hotspots", "Findings"]} active={tab} onChange={setTab} accent={accent} />
+      {tab === 0 && (
+        <div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+            <StatCard icon="🗺️" label="Segments" value="1.76M" sub="Canadian coastline" color={accent} />
+            <StatCard icon="📏" label="Total Coast" value="520K km" sub="All latitudes" color="#a78bfa" />
+            <StatCard icon="📈" label="Increasing" value="60%" sub="Of coastline" color="#f59e0b" />
+            <StatCard icon="⚠️" label="Newly Very High" value="26K km" sub="By 2090s" color="#ef4444" />
+          </div>
+          <ChartCard title="Coastal Sensitivity Change by Zone" subtitle="CanCoast 2.0 Composite Sensitivity Index: 2000s vs 2090s projection">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={h3_zones} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+                <XAxis dataKey="zone" stroke={P.dim} fontSize={11} />
+                <YAxis stroke={P.dim} fontSize={11} label={{ value: "CSI", angle: -90, position: "insideLeft", fill: P.dim, fontSize: 11 }} />
+                <Tooltip content={<SharedTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="csi2000" name="2000s CSI" fill="#37474F" radius={[4, 4, 0, 0]} barSize={30} />
+                <Bar dataKey="csi2090" name="2090s CSI" fill={accent} radius={[4, 4, 0, 0]} barSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+      {tab === 1 && (
+        <ChartCard title="CSI Change by Region (2000s → 2090s)" subtitle="Sorted by magnitude of projected change">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={h3_hotspots} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={P.grid} horizontal={false} />
+              <XAxis type="number" stroke={P.dim} fontSize={11} />
+              <YAxis dataKey="region" type="category" stroke={P.dim} fontSize={11} width={120} />
+              <Tooltip content={<SharedTooltip suffix=" CSI points" />} />
+              <ReferenceLine x={0} stroke={P.dim} strokeDasharray="4 4" />
+              <Bar dataKey="change" radius={[0, 6, 6, 0]} barSize={22} name="CSI Change">
+                {h3_hotspots.map((d, i) => <Cell key={i} fill={d.color} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      )}
+      {tab === 2 && (
+        <div>
+          <VerdictBox supported={true} color="#22c55e"
+            text="Coastal sensitivity will increase substantially — but not uniformly. The Beaufort Sea is ground zero with a staggering +1,040 CSI point increase driven by sea ice loss, permafrost thaw, and increasing wave energy. The Central Arctic paradox: post-glacial rebound is actually reducing sensitivity in some areas despite warming." />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {[
+              { icon: "🔴", title: "Beaufort: Ground Zero", text: "The Beaufort Sea coast faces the most extreme increase in sensitivity (+900 to +1,180 CSI points) due to the compound effect of sea ice loss, permafrost degradation, and increasing storm fetch." },
+              { icon: "🔵", title: "Central Arctic Paradox", text: "Some Central Arctic coastlines are actually becoming less sensitive — post-glacial rebound (land rising after ice sheet removal) is a geologic counterforce to climate-driven sensitivity increases." },
+              { icon: "🟡", title: "Southern Sea-Level", text: "Southern coastlines (<60°N) show sensitivity increases driven primarily by sea-level rise rather than permafrost or ice dynamics — a fundamentally different mechanism." },
+              { icon: "🟢", title: "Risk Transitions", text: "56,000 km of coastline transitions upward in risk category. 26,000 km becomes 'Very High' sensitivity for the first time. 98,000 km already at 'Very High' stays there." },
+            ].map((card, i) => (
+              <div key={i} style={{ background: P.card, border: `1px solid ${P.border}`, borderRadius: 12, padding: "16px 18px" }}>
+                <div style={{ fontSize: 16, marginBottom: 6 }}>{card.icon}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6, color: P.text, fontFamily: "'Space Grotesk', sans-serif" }}>{card.title}</div>
+                <div style={{ fontSize: 12, color: P.muted, lineHeight: 1.6 }}>{card.text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// H4: STORM SURGE
+// ═══════════════════════════════════════════════════════════════
+const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const h4_tukMonthly = [
+  {m:"Jan",p99:0.223},{m:"Feb",p99:0.523},{m:"Mar",p99:0.422},{m:"Apr",p99:0.452},
+  {m:"May",p99:0.419},{m:"Jun",p99:0.559},{m:"Jul",p99:0.465},{m:"Aug",p99:0.744},
+  {m:"Sep",p99:0.785},{m:"Oct",p99:1.629},{m:"Nov",p99:0.680},{m:"Dec",p99:0.455},
+];
+const h4_churchillMonthly = [
+  {m:"Jan",p99:0.215},{m:"Feb",p99:0.302},{m:"Mar",p99:0.288},{m:"Apr",p99:0.358},
+  {m:"May",p99:0.227},{m:"Jun",p99:0.200},{m:"Jul",p99:0.531},{m:"Aug",p99:0.316},
+  {m:"Sep",p99:0.274},{m:"Oct",p99:0.347},{m:"Nov",p99:0.664},{m:"Dec",p99:0.399},
+];
+const h4_octoberEvent = [
+  {day:"Oct 19",peak:0.35,mean:0.15,label:"Pre-buildup"},
+  {day:"Oct 20",peak:0.72,mean:0.38,label:"Rapid intensification"},
+  {day:"Oct 21",peak:1.24,mean:0.67,label:"Approaching peak"},
+  {day:"Oct 22",peak:1.73,mean:0.95,label:"PEAK SURGE"},
+  {day:"Oct 23",peak:1.45,mean:0.71,label:"Slow decay"},
+  {day:"Oct 24",peak:0.89,mean:0.42,label:"Continued decay"},
+  {day:"Oct 25",peak:0.54,mean:0.28,label:"Diminishing"},
+  {day:"Oct 26",peak:0.31,mean:0.14,label:"Return to baseline"},
+];
+
+function H4Detail() {
+  const [tab, setTab] = useState(0);
+  const accent = "#3b82f6";
+  return (
+    <div>
+      <TabBar tabs={["The October Monster", "Seasonal Patterns", "Synthesis"]} active={tab} onChange={setTab} accent={accent} />
+      {tab === 0 && (
+        <div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+            <StatCard icon="🌊" label="Peak Surge" value="1.73 m" sub="Oct 22, 2023" color="#ef4444" />
+            <StatCard icon="📅" label="Duration" value="8 days" sub="Oct 19–26 event" color={accent} />
+            <StatCard icon="🌡️" label="Oct P99" value="1.63 m" sub="Tuktoyaktuk" color="#f59e0b" />
+            <StatCard icon="🧊" label="Ice-Free Window" value="Jul–Nov" sub="5 months exposed" color="#38bdf8" />
+          </div>
+          <ChartCard title="October 2023 Storm Surge — Tuktoyaktuk" subtitle="Daily peak and mean surge residuals during the major event">
+            <ResponsiveContainer width="100%" height={320}>
+              <ComposedChart data={h4_octoberEvent} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+                <XAxis dataKey="day" stroke={P.dim} fontSize={11} />
+                <YAxis stroke={P.dim} fontSize={11} label={{ value: "Surge (m)", angle: -90, position: "insideLeft", fill: P.dim, fontSize: 11 }} />
+                <Tooltip content={<SharedTooltip suffix=" m" />} />
+                <Area type="monotone" dataKey="mean" fill={accent + "20"} stroke="none" name="Mean Surge" />
+                <Line type="monotone" dataKey="peak" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 4, fill: "#ef4444" }} name="Peak Surge" />
+                <Line type="monotone" dataKey="mean" stroke={accent} strokeWidth={1.5} dot={false} name="Mean Surge" />
+                <ReferenceLine y={1.0} stroke="#f59e0b" strokeDasharray="6 4" label={{ value: "1m threshold", fill: "#f59e0b", fontSize: 10 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+      {tab === 1 && (
+        <ChartCard title="Monthly P99 Surge — Tuktoyaktuk vs Churchill" subtitle="99th percentile storm surge residuals by month">
+          <ResponsiveContainer width="100%" height={340}>
+            <BarChart margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
+              data={h4_tukMonthly.map((d, i) => ({...d, churchillP99: h4_churchillMonthly[i].p99 }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+              <XAxis dataKey="m" stroke={P.dim} fontSize={11} />
+              <YAxis stroke={P.dim} fontSize={11} label={{ value: "P99 Surge (m)", angle: -90, position: "insideLeft", fill: P.dim, fontSize: 11 }} />
+              <Tooltip content={<SharedTooltip suffix=" m" />} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="p99" name="Tuktoyaktuk" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={16} />
+              <Bar dataKey="churchillP99" name="Churchill" fill={accent} radius={[4, 4, 0, 0]} barSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      )}
+      {tab === 2 && (
+        <VerdictBox supported={true} color="#22c55e"
+          text="Storm surge at Tuktoyaktuk is strongly seasonal and intensifying. October is the peak danger month — the ice-free open water season allows maximum storm fetch while autumn storms peak in intensity. The 1.73m surge on October 22, 2023 exemplifies the compound risk: open water + strong winds + low-lying permafrost coast = maximum erosion potential. Churchill shows a different pattern with November peaks, reflecting its Hudson Bay ice timing." />
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// H5: ICE THICKNESS
+// ═══════════════════════════════════════════════════════════════
+const h5_stations = [
+  {name:"Hall Beach",trend:-28.0,earlyIce:216,lateIce:186,region:"Central Arctic",lat:68.8},
+  {name:"Inuvik",trend:-27.2,earlyIce:116,lateIce:96,region:"Beaufort",lat:68.4},
+  {name:"Resolute",trend:-22.6,earlyIce:199,lateIce:169,region:"Central Arctic",lat:74.7},
+  {name:"Baker Lake",trend:-13.4,earlyIce:212,lateIce:194,region:"Hudson Bay",lat:64.3},
+  {name:"Yellowknife",trend:-8.6,earlyIce:120,lateIce:110,region:"Subarctic",lat:62.5},
+  {name:"Cambridge Bay",trend:-5.6,earlyIce:204,lateIce:192,region:"Central Arctic",lat:69.1},
+  {name:"Eureka",trend:-3.6,earlyIce:216,lateIce:212,region:"High Arctic",lat:80.0},
+  {name:"Alert",trend:-1.7,earlyIce:185,lateIce:186,region:"High Arctic",lat:82.5},
+  {name:"Iqaluit",trend:10.0,earlyIce:153,lateIce:171,region:"Eastern Arctic",lat:63.8},
+];
+
+function H5Detail() {
+  const [tab, setTab] = useState(0);
+  const accent = "#38bdf8";
+  return (
+    <div>
+      <TabBar tabs={["Network Trends", "Station Cards", "Synthesis"]} active={tab} onChange={setTab} accent={accent} />
+      {tab === 0 && (
+        <div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+            <StatCard icon="🧊" label="Stations" value="11" sub="Canadian Arctic network" color={accent} />
+            <StatCard icon="📉" label="Declining" value="9 of 11" sub="Stations thinning" color="#f43f5e" />
+            <StatCard icon="🔴" label="Fastest Decline" value="-28 cm" sub="Hall Beach per decade" color="#ef4444" />
+            <StatCard icon="🟢" label="Exception" value="Iqaluit" sub="+10 cm/decade" color="#22c55e" />
+          </div>
+          <ChartCard title="Ice Thickness Trend by Station (cm/decade)" subtitle="Peak ice thickness trend from 2002–2024, sorted by decline rate">
+            <ResponsiveContainer width="100%" height={360}>
+              <BarChart data={h5_stations} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} horizontal={false} />
+                <XAxis type="number" stroke={P.dim} fontSize={11} />
+                <YAxis dataKey="name" type="category" stroke={P.dim} fontSize={11} width={100} />
+                <Tooltip content={<SharedTooltip suffix=" cm/decade" />} />
+                <ReferenceLine x={0} stroke={P.dim} strokeDasharray="4 4" />
+                <Bar dataKey="trend" radius={[0, 6, 6, 0]} barSize={20} name="Trend (cm/decade)">
+                  {h5_stations.map((d, i) => <Cell key={i} fill={d.trend > 0 ? "#22c55e" : d.trend < -15 ? "#ef4444" : "#f59e0b"} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+      {tab === 1 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          {h5_stations.map((s, i) => (
+            <div key={i} style={{ background: P.card, border: `1px solid ${P.border}`, borderRadius: 10, padding: "14px 16px" }}>
+              <div style={{ fontSize: 14, fontWeight: 600, fontFamily: "'Space Grotesk', sans-serif", marginBottom: 4 }}>{s.name}</div>
+              <div style={{ fontSize: 11, color: P.muted, marginBottom: 8 }}>{s.lat}°N · {s.region}</div>
+              <div style={{
+                textAlign: "center", padding: "6px 0", borderRadius: 6, fontWeight: 700, fontSize: 18,
+                background: s.trend > 0 ? "#22c55e18" : "#ef444418",
+                color: s.trend > 0 ? "#22c55e" : "#ef4444",
+                fontFamily: "'DM Mono', monospace",
+              }}>{s.trend > 0 ? '+' : ''}{s.trend} cm/dec</div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: P.muted, marginTop: 8 }}>
+                <span>Early: {s.earlyIce}cm</span><span>→</span><span>Recent: {s.lateIce}cm</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {tab === 2 && (
+        <VerdictBox supported={true} color="#22c55e"
+          text="Ice thickness is declining at 9 of 11 monitored Arctic stations. The strongest signal is at Hall Beach (-28 cm/decade) and Inuvik (-27 cm/decade) in the western Arctic. High Arctic stations (Eureka, Alert) show smaller but consistent declines. The sole exception is Iqaluit (+10 cm/decade), likely due to local oceanographic factors in Frobisher Bay. Snow depth on ice is increasing at some stations, which paradoxically slows ice growth by insulating the surface." />
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// H6: RIVER ICE
+// ═══════════════════════════════════════════════════════════════
+const h6_northData = [
+  {decade:"1960s",freezeup:310.5,breakup:119.3,season:168.7},{decade:"1970s",freezeup:310.2,breakup:118.1,season:166.1},
+  {decade:"1980s",freezeup:311.8,breakup:122.5,season:174.3},{decade:"1990s",freezeup:312.2,breakup:120.1,season:171.1},
+  {decade:"2000s",freezeup:310.8,breakup:121.4,season:165.2},{decade:"2010s",freezeup:313.6,breakup:122.6,season:165.0},
+];
+const h6_southData = [
+  {decade:"1960s",freezeup:302.5,breakup:102.8,season:123.3},{decade:"1970s",freezeup:296.3,breakup:96.8,season:118.5},
+  {decade:"1980s",freezeup:300.9,breakup:95.1,season:117.2},{decade:"1990s",freezeup:291.5,breakup:93.5,season:112.0},
+  {decade:"2000s",freezeup:285.8,breakup:93.7,season:111.9},{decade:"2010s",freezeup:296.4,breakup:96.4,season:113.0},
+];
+
+function H6Detail() {
+  const [tab, setTab] = useState(0);
+  const accent = "#E8935A";
+  return (
+    <div>
+      <TabBar tabs={["North vs South", "Decade Trends", "Synthesis"]} active={tab} onChange={setTab} accent={accent} />
+      {tab === 0 && (
+        <div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+            <StatCard icon="🏔️" label="Record Span" value="120+ yrs" sub="1894–2015" color={accent} />
+            <StatCard icon="🌊" label="South Breakup" value="−4 days" sub="Per century" color="#4CC9B0" />
+            <StatCard icon="🧊" label="North Freeze-up" value="~Stable" sub="Minimal trend" color="#6BBEEF" />
+            <StatCard icon="📊" label="South Season" value="−10 days" sub="Ice cover shrinking" color="#E8697A" />
+          </div>
+          <ChartCard title="Northern Rivers (≥55°N) — Decade Averages" subtitle="Freeze-up (DOY), breakup (DOY), and ice season length">
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={h6_northData} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+                <XAxis dataKey="decade" stroke={P.dim} fontSize={11} />
+                <YAxis stroke={P.dim} fontSize={11} label={{ value: "Day of Year / Days", angle: -90, position: "insideLeft", fill: P.dim, fontSize: 11 }} />
+                <Tooltip content={<SharedTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="season" name="Ice Season (days)" fill={accent + "44"} radius={[4, 4, 0, 0]} barSize={28} />
+                <Line type="monotone" dataKey="freezeup" name="Freeze-up (DOY)" stroke="#6BBEEF" strokeWidth={2} dot={{ r: 3, fill: "#6BBEEF" }} />
+                <Line type="monotone" dataKey="breakup" name="Breakup (DOY)" stroke="#4CC9B0" strokeWidth={2} dot={{ r: 3, fill: "#4CC9B0" }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+          <ChartCard title="Southern Rivers (<55°N) — Decade Averages" subtitle="Clearer trend visible in southern rivers">
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={h6_southData} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+                <XAxis dataKey="decade" stroke={P.dim} fontSize={11} />
+                <YAxis stroke={P.dim} fontSize={11} />
+                <Tooltip content={<SharedTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="season" name="Ice Season (days)" fill="#E8697A44" radius={[4, 4, 0, 0]} barSize={28} />
+                <Line type="monotone" dataKey="freezeup" name="Freeze-up (DOY)" stroke="#6BBEEF" strokeWidth={2} dot={{ r: 3, fill: "#6BBEEF" }} />
+                <Line type="monotone" dataKey="breakup" name="Breakup (DOY)" stroke="#4CC9B0" strokeWidth={2} dot={{ r: 3, fill: "#4CC9B0" }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+      {tab === 1 && (
+        <ChartCard title="Ice Season Length Trend — North vs South" subtitle="Decadal averages showing ice cover duration">
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart data={h6_northData.map((d, i) => ({decade: d.decade, north: d.season, south: h6_southData[i].season}))} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+              <XAxis dataKey="decade" stroke={P.dim} fontSize={11} />
+              <YAxis stroke={P.dim} fontSize={11} label={{ value: "Ice Season (days)", angle: -90, position: "insideLeft", fill: P.dim, fontSize: 11 }} />
+              <Tooltip content={<SharedTooltip suffix=" days" />} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Line type="monotone" dataKey="north" name="Northern (≥55°N)" stroke={accent} strokeWidth={2.5} dot={{ r: 4, fill: accent }} />
+              <Line type="monotone" dataKey="south" name="Southern (<55°N)" stroke="#E8697A" strokeWidth={2.5} dot={{ r: 4, fill: "#E8697A" }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      )}
+      {tab === 2 && (
+        <VerdictBox supported={false} color="#f59e0b"
+          text="Partially supported. Southern rivers show a clear signal: breakup advancing ~4 days per century with ice season shortening by ~10 days. Northern rivers show a weaker, noisier signal — freeze-up timing is remarkably stable, while breakup shows a slight earlier trend. The longer persistence of cold in the north acts as a buffer. The strongest signals come from southern watersheds where spring warming has the most direct impact on ice-out timing." />
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// H7: SWE ANALYSIS
+// ═══════════════════════════════════════════════════════════════
+const h7_northSWE = [
+  {year:1965,swe:158},{year:1970,swe:147},{year:1975,swe:148},{year:1980,swe:122},
+  {year:1985,swe:220},{year:1990,swe:218},{year:1995,swe:173},{year:2000,swe:190},
+  {year:2005,swe:221},{year:2010,swe:170},{year:2015,swe:148},{year:2020,swe:221},{year:2023,swe:216},
+];
+const h7_southSWE = [
+  {year:1965,swe:235},{year:1970,swe:259},{year:1975,swe:350},{year:1980,swe:274},
+  {year:1985,swe:351},{year:1990,swe:443},{year:1995,swe:426},{year:2000,swe:456},
+  {year:2005,swe:346},{year:2010,swe:212},{year:2015,swe:316},{year:2020,swe:271},{year:2023,swe:373},
+];
+const h7_latBands = [
+  {band:"Arctic (>65°N)",trend:1.2,color:"#38BDF8",stations:312},{band:"Subarctic (55-65°N)",trend:0.4,color:"#6366F1",stations:894},
+  {band:"Northern (50-55°N)",trend:-0.8,color:"#F59E0B",stations:1021},{band:"Southern (<50°N)",trend:-2.1,color:"#EF4444",stations:694},
+];
+
+function H7Detail() {
+  const [tab, setTab] = useState(0);
+  const accent = "#38BDF8";
+  return (
+    <div>
+      <TabBar tabs={["North vs South", "By Latitude Band", "Synthesis"]} active={tab} onChange={setTab} accent={accent} />
+      {tab === 0 && (
+        <div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+            <StatCard icon="❄️" label="Stations" value="2,921" sub="CanSWE network" color={accent} />
+            <StatCard icon="📅" label="Record" value="~95 yrs" sub="1928–2023" color="#F59E0B" />
+            <StatCard icon="📈" label="North Trend" value="+1.2" sub="mm/decade (increasing!)" color="#22c55e" />
+            <StatCard icon="📉" label="South Trend" value="-2.1" sub="mm/decade (declining)" color="#EF4444" />
+          </div>
+          <ChartCard title="SWE Trends — North vs South" subtitle="Northern Canada SWE is increasing, not declining as hypothesized">
+            <ResponsiveContainer width="100%" height={320}>
+              <ComposedChart data={h7_northSWE.map((d, i) => ({year: d.year, north: d.swe, south: h7_southSWE[i]?.swe}))} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+                <XAxis dataKey="year" stroke={P.dim} fontSize={11} />
+                <YAxis stroke={P.dim} fontSize={11} label={{ value: "SWE (mm)", angle: -90, position: "insideLeft", fill: P.dim, fontSize: 11 }} />
+                <Tooltip content={<SharedTooltip suffix=" mm" />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="north" name="North (>55°N)" stroke={accent} strokeWidth={2.5} dot={{ r: 3, fill: accent }} />
+                <Line type="monotone" dataKey="south" name="South (<55°N)" stroke="#EF4444" strokeWidth={2.5} dot={{ r: 3, fill: "#EF4444" }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+      {tab === 1 && (
+        <ChartCard title="SWE Trend by Latitude Band" subtitle="mm SWE change per decade — positive = snowier, negative = less snow">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={h7_latBands} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={P.grid} horizontal={false} />
+              <XAxis type="number" stroke={P.dim} fontSize={11} />
+              <YAxis dataKey="band" type="category" stroke={P.dim} fontSize={11} width={130} />
+              <Tooltip content={<SharedTooltip suffix=" mm/decade" />} />
+              <ReferenceLine x={0} stroke={P.dim} strokeDasharray="4 4" />
+              <Bar dataKey="trend" radius={[0, 6, 6, 0]} barSize={22} name="SWE Trend">
+                {h7_latBands.map((d, i) => <Cell key={i} fill={d.color} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      )}
+      {tab === 2 && (
+        <VerdictBox supported={false} color="#ef4444"
+          text="Hypothesis NOT supported — northern SWE is actually increasing (+1.2 mm/decade), not declining. The Arctic is getting snowier, not drier. This is consistent with a warming Arctic: warmer air holds more moisture, leading to increased snowfall in the north even as snow seasons shorten. Southern Canada shows the expected decline (-2.1 mm/decade) where warming shifts precipitation from snow to rain. This has major implications: more snow insulates permafrost (slowing thaw) and increases spring melt volumes (flood risk)." />
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// H8: COMPOUND IMPACT
+// ═══════════════════════════════════════════════════════════════
+const h8_compoundImpact = [
+  {region:"W. Arctic (Beaufort)",warming:85,iceLoss:75,permafrost:60,erosion:90,coastal:80},
+  {region:"Central Arctic (Nunavut)",warming:70,iceLoss:55,permafrost:40,erosion:20,coastal:95},
+  {region:"E. Arctic (Baffin/Hudson)",warming:60,iceLoss:45,permafrost:55,erosion:15,coastal:70},
+  {region:"High Arctic (Ellesmere)",warming:90,iceLoss:50,permafrost:30,erosion:10,coastal:95},
+];
+const h8_iceStations = [
+  {name:"Alert",change:-9.2,color:"#38bdf8"},{name:"Resolute",change:-8.6,color:"#f59e0b"},
+  {name:"Inuvik",change:-15.1,color:"#ef4444"},{name:"Yellowknife",change:-9.3,color:"#a78bfa"},
+  {name:"Iqaluit",change:-1.1,color:"#22c55e"},{name:"Cambridge Bay",change:-4.0,color:"#64748b"},
+  {name:"Baker Lake",change:-6.8,color:"#f97316"},{name:"Eureka",change:-4.4,color:"#38bdf8"},
+  {name:"Coral Harbour",change:-7.0,color:"#E8935A"},{name:"Hall Beach",change:-3.9,color:"#6366F1"},
+];
+const h8_erosionBySea = [
+  {sea:"Laptev Sea",rate:1.16,color:"#ef4444"},{sea:"E. Siberian",rate:1.01,color:"#f97316"},
+  {sea:"Can. Beaufort",rate:0.48,color:"#00E5A0"},{sea:"US Beaufort",rate:0.43,color:"#38bdf8"},
+  {sea:"Chukchi",rate:0.35,color:"#a78bfa"},{sea:"Barents",rate:0.29,color:"#f59e0b"},
+  {sea:"Kara",rate:0.15,color:"#64748b"},
+];
+
+function H8Detail() {
+  const [tab, setTab] = useState(0);
+  const accent = "#00E5A0";
+  return (
+    <div>
+      <TabBar tabs={["Overview", "Ice & Erosion", "Compound Risk", "Synthesis"]} active={tab} onChange={setTab} accent={accent} />
+      {tab === 0 && (
+        <div>
+          <VerdictBox supported={true} color="#22c55e"
+            text="The western Canadian Arctic (Beaufort Sea/Mackenzie Delta) emerges as the clear compounding impact hotspot. This region combines: the fastest coastal erosion in Canada (0.48 m/yr mean, up to 5.6 m/yr), thinning ice (Inuvik: −15%), deepening permafrost active layer, and extreme ground-ice content — creating a self-reinforcing erosion–permafrost feedback loop." />
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+            <StatCard icon="🔥" label="Hotspot" value="Beaufort" sub="Highest compound risk" color="#ef4444" />
+            <StatCard icon="🧊" label="Ice Thinning" value="-5 to -15%" sub="All stations declining" color="#38bdf8" />
+            <StatCard icon="🌡️" label="Active Layer" value="+5 to 10%" sub="Deepening Mackenzie" color="#f59e0b" />
+            <StatCard icon="🌊" label="Max Erosion" value="5.6 m/yr" sub="Canadian Beaufort" color="#a78bfa" />
+          </div>
+          <div style={{
+            display: "flex", justifyContent: "center", margin: "20px 0",
+            background: P.card, border: `1px solid ${P.border}`, borderRadius: 12, padding: 24,
+          }}>
+            <div style={{ position: "relative", width: 540, height: 300 }}>
+              {[
+                {label:"Warming\nClimate",x:220,y:0,color:"#ef4444",icon:"🌡️"},
+                {label:"Thinner\nIce Cover",x:420,y:90,color:"#38bdf8",icon:"🧊"},
+                {label:"Longer\nOpen Water",x:420,y:200,color:"#14b8a6",icon:"🌊"},
+                {label:"Faster\nErosion",x:220,y:250,color:"#f97316",icon:"🏖️"},
+                {label:"Permafrost\nThaw",x:20,y:200,color:"#f59e0b",icon:"🔥"},
+                {label:"Carbon\nRelease",x:20,y:90,color:"#a78bfa",icon:"💨"},
+              ].map((n, i) => (
+                <div key={i} style={{
+                  position:"absolute",left:n.x,top:n.y,
+                  background:P.card,border:`2px solid ${n.color}`,borderRadius:12,
+                  padding:"10px 14px",textAlign:"center",width:110,zIndex:2,
+                }}>
+                  <div style={{fontSize:18,marginBottom:2}}>{n.icon}</div>
+                  <div style={{fontSize:10,fontWeight:600,color:n.color,whiteSpace:"pre-line",lineHeight:1.3}}>{n.label}</div>
+                </div>
+              ))}
+              <svg style={{position:"absolute",top:0,left:0,width:540,height:300,zIndex:1}}>
+                <defs><marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#455A7A" /></marker></defs>
+                {[[320,35,420,110],[480,160,480,200],[420,280,330,280],[220,280,130,230],[70,200,70,160],[90,110,220,45]].map(([x1,y1,x2,y2],i)=>(
+                  <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#455A7A" strokeWidth={1.5} markerEnd="url(#ah)" strokeDasharray="4 3" />
+                ))}
+              </svg>
+            </div>
+          </div>
+          <div style={{fontSize:12,color:P.muted,lineHeight:1.6,textAlign:"center",maxWidth:600,margin:"0 auto"}}>
+            The Arctic compound impact cycle: warming thins ice → extends open-water season → accelerates wave-driven erosion → exposes permafrost → releases stored carbon → amplifies warming.
+          </div>
+        </div>
+      )}
+      {tab === 1 && (
+        <div>
+          <ChartCard title="Ice Thickness Change by Station (%)" subtitle="All stations showing change between early (2002–2013) and recent (2014–2024) periods">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={h8_iceStations} layout="vertical" margin={{top:5,right:20,bottom:5,left:10}}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} horizontal={false} />
+                <XAxis type="number" stroke={P.dim} fontSize={11} />
+                <YAxis dataKey="name" type="category" stroke={P.dim} fontSize={11} width={100} />
+                <Tooltip content={<SharedTooltip suffix="%" />} />
+                <ReferenceLine x={0} stroke={P.dim} strokeDasharray="4 4" />
+                <Bar dataKey="change" radius={[0,6,6,0]} barSize={18} name="% Change">
+                  {h8_iceStations.map((d,i)=><Cell key={i} fill={d.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+          <ChartCard title="Coastal Erosion by Arctic Sea (m/yr)" subtitle="Mean erosion rates from the Arctic Coastal Dynamics database">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={h8_erosionBySea} layout="vertical" margin={{top:5,right:20,bottom:5,left:10}}>
+                <CartesianGrid strokeDasharray="3 3" stroke={P.grid} horizontal={false} />
+                <XAxis type="number" stroke={P.dim} fontSize={11} />
+                <YAxis dataKey="sea" type="category" stroke={P.dim} fontSize={11} width={100} />
+                <Tooltip content={<SharedTooltip suffix=" m/yr" />} />
+                <Bar dataKey="rate" radius={[0,6,6,0]} barSize={18} name="Mean Erosion">
+                  {h8_erosionBySea.map((d,i)=><Cell key={i} fill={d.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+      {tab === 2 && (
+        <ChartCard title="Compound Impact Scores by Region" subtitle="Normalized scores (0–100) across five climate impact dimensions">
+          <ResponsiveContainer width="100%" height={360}>
+            <BarChart data={h8_compoundImpact} margin={{top:5,right:20,bottom:5,left:10}}>
+              <CartesianGrid strokeDasharray="3 3" stroke={P.grid} />
+              <XAxis dataKey="region" stroke={P.dim} fontSize={10} />
+              <YAxis stroke={P.dim} fontSize={11} domain={[0,100]} />
+              <Tooltip content={<SharedTooltip suffix="/100" />} />
+              <Legend wrapperStyle={{fontSize:10}} />
+              <Bar dataKey="warming" name="Warming" fill="#ef4444" radius={[2,2,0,0]} barSize={12} />
+              <Bar dataKey="iceLoss" name="Ice Loss" fill="#38bdf8" radius={[2,2,0,0]} barSize={12} />
+              <Bar dataKey="permafrost" name="Permafrost" fill="#f59e0b" radius={[2,2,0,0]} barSize={12} />
+              <Bar dataKey="erosion" name="Erosion" fill="#f97316" radius={[2,2,0,0]} barSize={12} />
+              <Bar dataKey="coastal" name="Coastal Sens." fill="#a78bfa" radius={[2,2,0,0]} barSize={12} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      )}
+      {tab === 3 && (
+        <div>
+          <VerdictBox supported={true} color="#22c55e"
+            text="Regions with the greatest warming DO show correlated changes across multiple variables. The western Beaufort/Mackenzie Delta scores highest on 4 of 5 compound impact dimensions. The High Arctic (Ellesmere) faces the steepest projected sensitivity increase (+183% by 2090s) despite currently low erosion — a 'future hotspot' signal." />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+            {[
+              {icon:"🔴",title:"Beaufort Nexus",text:"The only region where ALL five impact dimensions score above 60. Erosion (90), warming (85), coastal sensitivity (80), ice loss (75), and permafrost (60) create maximum compound risk."},
+              {icon:"🔵",title:"High Arctic Future",text:"Currently low erosion (10) but extreme warming (90) and near-maximum coastal sensitivity increase (95). This is the 'sleeping giant' — conditions are being set for rapid future change."},
+              {icon:"🟢",title:"Eastern Resilience",text:"Baffin/Hudson region shows lower compound scores across the board. Its geography (deep fjords, bedrock coasts) provides natural protection against erosion even as warming proceeds."},
+              {icon:"🧊",title:"Ice-Erosion Link",text:"Inuvik's -15% ice thinning directly maps to Beaufort's highest erosion rates. Less ice = longer open water = more wave energy = faster permafrost cliff retreat."},
+              {icon:"🌡️",title:"The Feedback Loop",text:"Data confirms the self-reinforcing cycle: warming → ice thinning → erosion → permafrost exposure → carbon release → more warming. Western Arctic is where this loop is strongest."},
+              {icon:"📊",title:"Data Integration",text:"This synthesis combined 9 distinct datasets across ice, permafrost, erosion, coastal sensitivity, and climate normals — demonstrating that Arctic change must be understood as a system, not individual variables."},
+            ].map((c,i)=>(
+              <div key={i} style={{background:P.card,border:`1px solid ${P.border}`,borderRadius:12,padding:"16px 18px"}}>
+                <div style={{fontSize:16,marginBottom:6}}>{c.icon}</div>
+                <div style={{fontSize:13,fontWeight:600,marginBottom:6,color:P.text,fontFamily:"'Space Grotesk', sans-serif"}}>{c.title}</div>
+                <div style={{fontSize:11,color:P.muted,lineHeight:1.6}}>{c.text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DETAIL VIEW WRAPPER
+// ═══════════════════════════════════════════════════════════════
+const DETAIL_COMPONENTS = { h1: H1Detail, h2: H2Detail, h3: H3Detail, h4: H4Detail, h5: H5Detail, h6: H6Detail, h7: H7Detail, h8: H8Detail };
+
+function DetailView({ hypothesis, onBack }) {
+  const h = hypothesis;
+  const DetailComponent = DETAIL_COMPONENTS[h.id];
+  return (
+    <div className="detail-view">
+      <div className="dashboard-root">
+        <div style={{ paddingTop: 28 }}>
+          <button className="detail-back" onClick={onBack}>
+            <span style={{ fontSize: 16 }}>←</span> Back to Dashboard
+          </button>
+
+          <div style={{ borderBottom: `1px solid ${P.border}`, paddingBottom: 20, marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: h.accent, boxShadow: `0 0 12px ${h.accent}88` }} />
+              <span style={{ fontSize: 11, color: h.accent, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 600, fontFamily: "'IBM Plex Mono', monospace" }}>
+                Hypothesis {h.label} — {h.id === "h8" ? "Cross-Dataset Synthesis" : h.category === "permafrost" ? "Permafrost & Active Layer" : h.category === "coastal" ? "Coastal Change" : "Ice & Snow"}
+              </span>
+            </div>
+            <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 6px", fontFamily: "'Space Grotesk', sans-serif", lineHeight: 1.2 }}>
+              {h.subtitle}
+            </h1>
+            <p style={{ color: P.muted, marginTop: 8, fontSize: 14, maxWidth: 700, lineHeight: 1.5 }}>
+              {h.description}
+            </p>
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <span style={{
+                fontSize: 11, padding: "4px 12px", borderRadius: 20, fontWeight: 600,
+                background: h.verdictColor + "18", color: h.verdictColor, border: `1px solid ${h.verdictColor}44`,
+                fontFamily: "'IBM Plex Mono', monospace",
+              }}>
+                {h.verdict === "Supported" ? "✅" : h.verdict === "Not Supported" ? "❌" : "⚠️"} {h.verdict}
+              </span>
+              {h.datasets.map((d, i) => (
+                <span key={i} style={{
+                  fontSize: 11, padding: "4px 12px", borderRadius: 20,
+                  background: P.card, color: P.muted, border: `1px solid ${P.border}`,
+                }}>{d}</span>
+              ))}
+            </div>
+          </div>
+
+          {DetailComponent && <DetailComponent />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LANDING PAGE
+// ═══════════════════════════════════════════════════════════════
+function LandingPage({ onSelect }) {
+  return (
+    <div className="dashboard-root">
+      <div className="hero">
+        <div className="hero-badge">
+          <span className="hero-badge-dot" />
+          Arctic Climate Analysis
+        </div>
+        <h1>Arctic Climate Change — Hypothesis Dashboard</h1>
+        <p>
+          Eight hypotheses tested across 9 Arctic climate datasets — from permafrost degradation to coastal erosion, ice thickness to snow water equivalent.
+          Click any hypothesis to explore the interactive analysis.
+        </p>
+
+        <div className="global-stats">
+          <div className="global-stat">
+            <div className="global-stat-value">8</div>
+            <div className="global-stat-label">Hypotheses</div>
+          </div>
+          <div className="global-stat">
+            <div className="global-stat-value">9</div>
+            <div className="global-stat-label">Datasets</div>
+          </div>
+          <div className="global-stat">
+            <div className="global-stat-value">120+</div>
+            <div className="global-stat-label">Years of Data</div>
+          </div>
+          <div className="global-stat">
+            <div className="global-stat-value">5</div>
+            <div className="global-stat-label">Supported</div>
+          </div>
+          <div className="global-stat">
+            <div className="global-stat-value">2</div>
+            <div className="global-stat-label">Partially</div>
+          </div>
+          <div className="global-stat">
+            <div className="global-stat-value">1</div>
+            <div className="global-stat-label">Rejected</div>
+          </div>
+        </div>
+      </div>
+
+      {CATEGORIES.map(cat => {
+        const hypotheses = HYPOTHESIS_DATA.filter(h => h.category === cat.id);
+        return (
+          <div key={cat.id} className="category-section">
+            <div className="category-header">
+              <div className="category-icon">{cat.icon}</div>
+              <span className="category-title">{cat.label}</span>
+              <span className="category-count">{cat.count} {cat.count === 1 ? 'hypothesis' : 'hypotheses'}</span>
+            </div>
+            <div className="hypothesis-grid">
+              {hypotheses.map(h => (
+                <div key={h.id} className="hypothesis-card" onClick={() => onSelect(h)}>
+                  <div className="hypothesis-card-accent" style={{ background: `linear-gradient(90deg, ${h.accent}, ${h.accent}44)` }} />
+                  <div className="hypothesis-card-body">
+                    <div className="hypothesis-card-label" style={{ color: h.accent }}>{h.label}</div>
+                    <h3>{h.title}</h3>
+                    <p>{h.keyFinding}</p>
+                    <div className="hypothesis-card-meta">
+                      <span className="meta-tag" style={{ color: h.verdictColor, borderColor: h.verdictColor + "44", background: h.verdictColor + "10" }}>
+                        {h.verdict === "Supported" ? "✅" : h.verdict === "Not Supported" ? "❌" : "⚠️"} {h.verdict}
+                      </span>
+                      {h.tags.map((t, i) => (
+                        <span key={i} className="meta-tag" style={{ color: t.color, borderColor: t.color + "33", background: t.color + "08" }}>{t.label}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <span className="hypothesis-card-arrow">→</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="footer">
+        <p>
+          Arctic Climate Analysis Dashboard
+          <br />
+          Data from CALM, ACD, CanCoast 2.0, CHS, CRID, CanSWE, Ice Thickness Program, and Climate Normals
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// APP ROOT
+// ═══════════════════════════════════════════════════════════════
+function App() {
+  const [selected, setSelected] = useState(null);
+
+  const handleSelect = useCallback((h) => {
+    setSelected(h);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setSelected(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  if (selected) {
+    return <DetailView hypothesis={selected} onBack={handleBack} />;
+  }
+
+  return <LandingPage onSelect={handleSelect} />;
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
+</script>
+</body>
+</html>

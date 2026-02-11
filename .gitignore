@@ -1,0 +1,8 @@
+.DS_Store
+.staticrypt.json
+node_modules/
+data/
+mcp-server/
+*.pyc
+__pycache__/
+.venv/
